@@ -1,0 +1,26 @@
+{
+  "name": "@virtuoid/dice",
+  "version": "1.0.0",
+  "description": "Fun with JavaScript - Dice classes",
+  "main": "dist/exporter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheVirtuoid/fwjs-dice.git"
+  },
+  "keywords": [
+    "javascript",
+    "dice"
+  ],
+  "author": "TheVirtuoid <thevirtuoid@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheVirtuoid/fwjs-dice/issues"
+  },
+  "homepage": "https://github.com/TheVirtuoid/fwjs-dice#readme",
+  "devDependencies": {
+    "cypress": "^10.1.0"
+  }
+}

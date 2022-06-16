@@ -1,0 +1,15 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Die {
+	-Array<any> sides
+	-String name
+	--Getters--
+	+String name
+	--Setters--
+	--Methods--
+	+ctor(Number numberOfSides)
+	+ctor(Array<any> sides)
+	+roll()
+}
+@enduml
