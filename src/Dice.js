@@ -3,11 +3,52 @@ export default class Dice {
 		throw new Error('You cannot instantiate a new Dice class. Use the static methods instead.');
 	}
 
-	roll(equation = '') {
+	static roll(equation = '') {
 		return Dice.#parse(equation);
 	}
 
+	static #parse(equation) {
+		console.log(`------------------------eq: ${equation} ----------------------`);
+		const characters = equation.split('');
+		let operands = [];
+		let operators = [];
+		let number = '';
+		while (characters.length) {
+			const character = characters.shift().toLowerCase();
+			if (character.match(/[\d\.]/)) {
+				number = `${number}${character}`;
+			} else {
+				if (number !== '') {
+					operands.push(number);
+					number = '';
+				}
+				switch(character) {
+					case 'd':
+						if (operands.length === 0) {
+							operands.push('1');
+						}
+						operators.push(character);
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		if (number !== '') {
+			operands.push(number);
+		}
+		console.log('BEFORE');
+		console.log(operands);
+		({ operands, operators } = Dice.#collapseStack({ operands, operators }));
+		console.log(operands);
+		if (operands.length !== 1) {
+			throw new Error('The equation is mal-formed');
+		}
+		return operands[0];
+	}
+
 	// TODO: I would like to possibly use a regex here to get what I need
+/*
 	static #parse (equation) {
 		const parts = equation.split('');
 		let operands = [];
@@ -55,8 +96,9 @@ export default class Dice {
 		}
 		return operators[0];
 	}
+*/
 
-	static #collapseStacks (stacks) {
+	static #collapseStack (stacks) {
 		let { operands, operators } = stacks;
 		while(operators.length && operators[operators.length - 1] !== '(') {
 			({operands, operators } = Dice.#collapse({ operands, operators }));
@@ -64,6 +106,39 @@ export default class Dice {
 		return { operands, operators };
 	}
 
+	static #collapse(stacks) {
+		const { operands, operators } = stacks;
+		let result;
+		if (operands.length >= 2 && operators.length >= 1) {
+			const operand2 = parseFloat(operands.pop());
+			const operand1 = parseFloat(operands.pop());
+			const operator = operators.pop();
+			switch(operator) {
+				case 'd':
+					if (!Number.isInteger(operand2) || !Number.isInteger(operand1)) {
+						throw new Error(`One of the operands is not an integer number.`);
+					}
+					if (operand2 < 2) {
+						throw new Error(`The dice type (number after the 'd') must be 2 or greater.`);
+					}
+					if (operand1 < 1) {
+						throw new Error(`The number of dices (number before the 'd') must be 1 or greater.`);
+					}
+					result = 0;
+					for(let i = 1; i <= operand1; i++) {
+						result += Math.ceil(Math.random() * operand2);
+					}
+					break;
+			}
+			operands.push(result);
+		} else {
+			throw new Error('Operator/operand mismatch. The equation is not balanced.');
+		}
+		operands.push(result);
+		return { operands, operators };
+	}
+
+/*
 	static #collapse (stacks) {
 		const { operands, operators } = stacks;
 		let result;
@@ -97,4 +172,5 @@ export default class Dice {
 		}
 		return { operands, operators };
 	}
+*/
 }
