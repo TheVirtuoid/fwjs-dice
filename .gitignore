@@ -108,3 +108,5 @@ dist
 
 # Visual Studio
 .vs
+/cypress/screenshots/
+/cypress/videos/

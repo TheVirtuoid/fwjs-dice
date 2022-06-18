@@ -1,0 +1,37 @@
+import Dice from "../../src/Dice";
+
+describe('multiplication', () => {
+	it('should throw error if "*" by itself', () => {
+		try {
+			Dice.roll('*');
+			expect(true).to.be.false;
+		} catch (err) {
+			expect(err.name).to.equal('Error');
+		}
+	});
+	it('should throw error if "*" is first in equation', () => {
+		try {
+			Dice.roll('*3');
+			expect(true).to.be.false;
+		} catch (err) {
+			expect(err.name).to.equal('Error');
+		}
+	});
+	it('should throw error if "*" is last in equation', () => {
+		try {
+			Dice.roll('3*');
+			expect(true).to.be.false;
+		} catch (err) {
+			expect(err.name).to.equal('Error');
+		}
+	});
+	it('should return the number 6', () => {
+		const result = Dice.roll('2*3');
+		expect(result).to.equal(6);
+	});
+	// we use toFixed() in the test below to take into account IEEE precision issues
+	it('should return the number 3.4', () => {
+		const result = Dice.roll('1.2*2.2');
+		expect(result.toFixed(2)).to.equal('2.64');
+	});
+});
