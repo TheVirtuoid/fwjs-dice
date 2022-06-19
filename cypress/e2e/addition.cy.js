@@ -11,7 +11,7 @@ describe('addition', () => {
 	});
 	it('should throw error if "+" is first in equation', () => {
 		try {
-			Dice.roll('+3');
+			Dice.roll('+4');
 			expect(true).to.be.false;
 		} catch (err) {
 			expect(err.name).to.equal('Error');
@@ -19,7 +19,7 @@ describe('addition', () => {
 	});
 	it('should throw error if "+" is last in equation', () => {
 		try {
-			Dice.roll('3+');
+			Dice.roll('7+');
 			expect(true).to.be.false;
 		} catch (err) {
 			expect(err.name).to.equal('Error');

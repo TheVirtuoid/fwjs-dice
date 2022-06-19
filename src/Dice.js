@@ -7,7 +7,17 @@ export default class Dice {
 		return Dice.#parse(equation);
 	}
 
+	static #numberOperandsPerOperator = new Map([
+			['+', 2],
+			['-', 2],
+			['*', 2],
+			['/', 2],
+			['d', 2]
+	]);
+
+
 	static #parse(equation) {
+		console.log(`-------------------------------------------- ${equation} -------------------------------------`);
 		const characters = equation.split('');
 		let operands = [];
 		let operators = [];
@@ -28,7 +38,7 @@ export default class Dice {
 						}
 						operators.push(character);
 						break;
-					case '(':
+					/*case '(':
 						if (operands.length === operators.length) {
 							operators.push(character);
 						} else {
@@ -41,20 +51,20 @@ export default class Dice {
 							throw new Error('Mismatch of parenthesis. Too many close parenthesis.');
 						}
 						operators.pop();
-						break;
-					case '*':
+						break;*/
+					/*case '*':
 					case '/':
 						if ('+-'.indexOf(operators[operators.length - 1]) !== -1) {
 							const result = Dice.#collapseStack({ operands, operators });
 							operands.push(result);
 						}
+						operators.push(character);*/
 					case '+':
 					case '-':
 						if (operands.length === 0) {
 							throw new Error('Operator must not be the first character in the equation.');
 						}
-						const result = Dice.#collapseStack({ operands, operators });
-						operands.push(result);
+						({ operands, operators } = Dice.#collapseStack({ operands, operators }));
 						operators.push(character);
 						break;
 					default:
@@ -66,6 +76,9 @@ export default class Dice {
 		if (number !== '') {
 			operands.push(number);
 		}
+		console.log('AT END');
+		console.log(JSON.stringify(operands));
+		console.log(JSON.stringify(operators));
 		({ operands, operators } = Dice.#collapseStack({ operands, operators }));
 		if (operands.length !== 1 && operators.length !== 0) {
 			throw new Error('The equation is mal-formed');
@@ -75,7 +88,10 @@ export default class Dice {
 
 	// TODO: I would like to possibly use a regex here to get what I need
 	static #collapseStack (stacks, closeParenthesis = false) {
+		console.log('----COLLAPSE STACK');
 		let { operands, operators } = stacks;
+		console.log(JSON.stringify(operands));
+		console.log(JSON.stringify(operators));
 		while(operators.length && operators[operators.length - 1] !== '(') {
 			({operands, operators } = Dice.#collapse({ operands, operators }));
 		}
@@ -88,84 +104,65 @@ export default class Dice {
 		return { operands, operators };
 	}
 
+	/*
+			Collapsing
+			operand = 0, operator = 0:		Error: No final result
+			operand = 1, operator = 0:		Return
+			operand = 1, operator = 1:		process
+	 */
+
 	static #collapse(stacks) {
+		console.log('---collapse   ');
 		const { operands, operators } = stacks;
-		let result;
-		if (operands.length >= 2 && operators.length >= 1) {
-			const operand2 = parseFloat(operands.pop());
-			const operand1 = parseFloat(operands.pop());
-			const operator = operators.pop();
-			switch(operator) {
-				case 'd':
-					if (!Number.isInteger(operand2) || !Number.isInteger(operand1)) {
-						throw new Error(`One of the operands is not an integer number.`);
-					}
-					if (operand2 < 2) {
-						throw new Error(`The dice type (number after the 'd') must be 2 or greater.`);
-					}
-					if (operand1 < 1) {
-						throw new Error(`The number of dices (number before the 'd') must be 1 or greater.`);
-					}
-					result = 0;
-					for(let i = 1; i <= operand1; i++) {
-						result += Math.ceil(Math.random() * operand2);
-					}
-					break;
-				case '+':
-					result = operand1 + operand2;
-					break;
-				case '-':
-					result = operand1 - operand2;
-					break;
-				case '*':
-					result = operand1 * operand2;
-					break;
-				case '/':
-					result = operand1 / operand2;
-					break;
-				default:
-					break;
-			}
-			operands.push(result);
-		} else {
-			throw new Error('Operator/operand mismatch. The equation is not balanced.');
+		console.log(JSON.stringify(operands));
+		console.log(JSON.stringify(operators));
+		if (operands.length + operators.length === 0) {
+			throw new Error('There must be at least one operand and one operator.');
 		}
+		if (operands.length === 1 && operators.length === 0) {
+			return { operands, operators };
+		}
+		if (operators.length === 0) {
+			throw new Error('Badly formed equation. Too many operands for the operators.');
+		}
+		let result;
+		const operator = operators.pop();
+		const numberOperands = Dice.#numberOperandsPerOperator.get(operator);
+		if (operands.length < numberOperands) {
+			throw new Error(`Badly formed equation. Too few operands for the operator ${operator}.`);
+		}
+		const numbers = operands.splice(operands.length - numberOperands).map((item) => parseFloat(item));
+		switch(operator) {
+			case '+':
+				result = numbers[0] + numbers[1];
+				break;
+			case '-':
+				result = numbers[0] - numbers[1];
+				break;
+			case '*':
+				result = numbers[0] * numbers[1];
+				break;
+			case '/':
+				result = numbers[0] / numbers[1];
+				break;
+			case 'd':
+				if (!Number.isInteger(numbers[0]) || !Number.isInteger(numbers[1])) {
+					throw new Error(`One of the operands is not an integer number.`);
+				}
+				if (numbers[1] < 2) {
+					throw new Error(`The dice type (number after the 'd') must be 2 or greater.`);
+				}
+				if (numbers[0] < 1) {
+					throw new Error(`The number of dices (number before the 'd') must be 1 or greater.`);
+				}
+				result = 0;
+				for(let i = 1; i <= numbers[0]; i++) {
+					result += Math.ceil(Math.random() * numbers[1]);
+				}
+				break;
+		}
+		operands.push(result);
 		return { operands, operators };
 	}
 
-/*
-	static #collapse (stacks) {
-		const { operands, operators } = stacks;
-		let result;
-		if (operands.length >= 2 && operators.length >= 1) {
-			const operand2 = operands.pop();
-			const operand1 = operands.pop();
-			const operator = operators.pop();
-			switch(operator) {
-				case '+':
-					result = operand1 + operand2;
-					break;
-				case '-':
-					result = operand1 - operand2;
-					break;
-				case '*':
-					result = operand1 * operand2;
-					break;
-				case '/':
-					result = operand1 / operand2;
-					break;
-				case 'd':
-					result = 0;
-					for(let i = 1; i <= operand1; i++) {
-						result += Math.ceil(Math.random() * operand2);
-					}
-					break;
-			}
-			operands.push(result);
-		} else {
-			throw new Error('Operator/operand mismatch. The equation is not balanced.');
-		}
-		return { operands, operators };
-	}
-*/
 }
