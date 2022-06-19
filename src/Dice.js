@@ -52,13 +52,14 @@ export default class Dice {
 						}
 						operators.pop();
 						break;*/
-					/*case '*':
+					case '*':
 					case '/':
 						if ('+-'.indexOf(operators[operators.length - 1]) !== -1) {
 							const result = Dice.#collapseStack({ operands, operators });
 							operands.push(result);
 						}
-						operators.push(character);*/
+						operators.push(character);
+						break;
 					case '+':
 					case '-':
 						if (operands.length === 0) {
@@ -76,9 +77,6 @@ export default class Dice {
 		if (number !== '') {
 			operands.push(number);
 		}
-		console.log('AT END');
-		console.log(JSON.stringify(operands));
-		console.log(JSON.stringify(operators));
 		({ operands, operators } = Dice.#collapseStack({ operands, operators }));
 		if (operands.length !== 1 && operators.length !== 0) {
 			throw new Error('The equation is mal-formed');
@@ -88,10 +86,7 @@ export default class Dice {
 
 	// TODO: I would like to possibly use a regex here to get what I need
 	static #collapseStack (stacks, closeParenthesis = false) {
-		console.log('----COLLAPSE STACK');
 		let { operands, operators } = stacks;
-		console.log(JSON.stringify(operands));
-		console.log(JSON.stringify(operators));
 		while(operators.length && operators[operators.length - 1] !== '(') {
 			({operands, operators } = Dice.#collapse({ operands, operators }));
 		}
@@ -104,18 +99,8 @@ export default class Dice {
 		return { operands, operators };
 	}
 
-	/*
-			Collapsing
-			operand = 0, operator = 0:		Error: No final result
-			operand = 1, operator = 0:		Return
-			operand = 1, operator = 1:		process
-	 */
-
 	static #collapse(stacks) {
-		console.log('---collapse   ');
 		const { operands, operators } = stacks;
-		console.log(JSON.stringify(operands));
-		console.log(JSON.stringify(operators));
 		if (operands.length + operators.length === 0) {
 			throw new Error('There must be at least one operand and one operator.');
 		}
@@ -129,7 +114,7 @@ export default class Dice {
 		const operator = operators.pop();
 		const numberOperands = Dice.#numberOperandsPerOperator.get(operator);
 		if (operands.length < numberOperands) {
-			throw new Error(`Badly formed equation. Too few operands for the operator ${operator}.`);
+			throw new Error(`Badly formed equation. Too few operands for the operator ${operator}. (${operands.length}`);
 		}
 		const numbers = operands.splice(operands.length - numberOperands).map((item) => parseFloat(item));
 		switch(operator) {
