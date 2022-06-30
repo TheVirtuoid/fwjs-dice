@@ -17,7 +17,6 @@ export default class Dice {
 
 
 	static #parse(equation) {
-		console.log(`-------------------------------------------- ${equation} -------------------------------------`);
 		const characters = equation.split('');
 		let operands = [];
 		let operators = [];
@@ -38,12 +37,8 @@ export default class Dice {
 						}
 						operators.push(character);
 						break;
-					/*case '(':
-						if (operands.length === operators.length) {
-							operators.push(character);
-						} else {
-							throw new Error('Illegal placement of open parenthesis.');
-						}
+					case '(':
+						operators.push(character);
 						break;
 					case ')':
 						Dice.#collapseStack({ operators, operands }, true);
@@ -51,20 +46,16 @@ export default class Dice {
 							throw new Error('Mismatch of parenthesis. Too many close parenthesis.');
 						}
 						operators.pop();
-						break;*/
+						break;
 					case '*':
 					case '/':
-						if ('+-'.indexOf(operators[operators.length - 1]) !== -1) {
-							const result = Dice.#collapseStack({ operands, operators });
-							operands.push(result);
+						if ('+-'.indexOf(operators[operators.length - 1]) === -1) {
+							({ operands, operators } = Dice.#collapseStack({ operands, operators }));
 						}
 						operators.push(character);
 						break;
 					case '+':
 					case '-':
-						if (operands.length === 0) {
-							throw new Error('Operator must not be the first character in the equation.');
-						}
 						({ operands, operators } = Dice.#collapseStack({ operands, operators }));
 						operators.push(character);
 						break;
@@ -78,7 +69,7 @@ export default class Dice {
 			operands.push(number);
 		}
 		({ operands, operators } = Dice.#collapseStack({ operands, operators }));
-		if (operands.length !== 1 && operators.length !== 0) {
+		if (operands.length !== 1 || operators.length !== 0) {
 			throw new Error('The equation is mal-formed');
 		}
 		return operands[0];
@@ -92,9 +83,6 @@ export default class Dice {
 		}
 		if (closeParenthesis && operators[operators.length - 1] !== '(') {
 			throw new Error('Mismatch parenthesis. More than one close parenthesis found.');
-		}
-		if (!closeParenthesis && operators[operators.length -1] === '(') {
-			throw new Error('Mismatch parenthesis. More than one open parenthesis found.');
 		}
 		return { operands, operators };
 	}
