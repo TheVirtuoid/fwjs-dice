@@ -4,6 +4,7 @@ This repository is for the 'Dice' static class used in the Fun with JavaScript s
 
 ## Versions
 
+1.0.2 : Fixed bug for multiple 'd' operators in equation.
 1.0.0 : Initial Version
 
 ## Installation
@@ -63,7 +64,7 @@ There is a special operator called the Dice operator that, when used with a pref
 | y     | Yes       |         | The number of sides on the die                                    |
 
 ### Examples:
-| Roll | Description |
+ | Roll | Description |
 | --- | --- |
 | ```d6``` | Roll a single six-sided die |
 | ```1d6``` | Roll a single six-sided die (same as first example) |

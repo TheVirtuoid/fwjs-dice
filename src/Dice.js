@@ -12,7 +12,7 @@ export default class Dice {
 			['-', 2],
 			['*', 2],
 			['/', 2],
-			['d', 2]
+			['d', 1]
 	]);
 
 
@@ -26,16 +26,15 @@ export default class Dice {
 			if (character.match(/[\d\.]/)) {
 				number = `${number}${character}`;
 			} else {
-				if (number !== '') {
+				if (number !== '' && character !== 'd') {
 					operands.push(number);
 					number = '';
 				}
 				switch(character) {
 					case 'd':
-						if (operands.length === 0) {
-							operands.push('1');
-						}
-						operators.push(character);
+						number = number || '1';
+						operators.push(`${number}-${character}`);
+						number = '';
 						break;
 					case '(':
 						operators.push(character);
@@ -99,7 +98,11 @@ export default class Dice {
 			throw new Error('Badly formed equation. Too many operands for the operators.');
 		}
 		let result;
-		const operator = operators.pop();
+		let dieNumber;
+		let operator = operators.pop();
+		if (operator.at(-1) === 'd') {
+			([dieNumber, operator] = operator.split('-'));
+		}
 		const numberOperands = Dice.#numberOperandsPerOperator.get(operator);
 		if (operands.length < numberOperands) {
 			throw new Error(`Badly formed equation. Too few operands for the operator ${operator}. (${operands.length}`);
@@ -119,6 +122,7 @@ export default class Dice {
 				result = numbers[0] / numbers[1];
 				break;
 			case 'd':
+				numbers.unshift(parseFloat(dieNumber));
 				if (!Number.isInteger(numbers[0]) || !Number.isInteger(numbers[1])) {
 					throw new Error(`One of the operands is not an integer number.`);
 				}

@@ -37,4 +37,9 @@ describe('operator precedence', () => {
 		const result = Dice.roll('3d6+100');
 		expect(result >= 103 && result <= 118).to.be.true;
 	});
+	it('multiple d operators', () => {
+		const result = Dice.roll('d6+2d6+d6');
+		expect(result >= 4 && result <= 24).to.be.true;
+	});
+
 });
