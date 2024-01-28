@@ -1,113 +1,145 @@
+class Stack {
+	operands;
+	operators;
+	root;
+
+	constructor(args) {
+		const { operands = [], operators = [], root = true } = args;
+		this.operands = operands;
+		this.operators = operators;
+		this.root = root;
+	}
+}
+
 export default class Dice {
 	constructor() {
 		throw new Error('You cannot instantiate a new Dice class. Use the static methods instead.');
 	}
 
 	static roll(equation = '') {
-		return Dice.#parse(equation);
+		this.#setupEquationService(equation);
+		return Dice.#parse(true);
 	}
 
 	static #numberOperandsPerOperator = new Map([
-			['+', 2],
-			['-', 2],
-			['*', 2],
-			['/', 2],
-			['d', 1]
+		['+', 2],
+		['-', 2],
+		['*', 2],
+		['/', 2],
+		['d', 1]
 	]);
 
+	static #equation = {
+		equation: null,
+		generator: null,
+		service: null
+	};
 
-	static #parse(equation) {
-		const characters = equation.split('');
-		let operands = [];
-		let operators = [];
+	static #setupEquationService(equation) {
+		const eq = this.#equation;
+		eq.equation = equation.split('');
+		eq.generator = function* () {
+			for(let i = 0, l = eq.equation.length; i < l; i++) {
+				yield eq.equation[i];
+			}
+		};
+		eq.service = eq.generator();
+	}
+
+	static #getNextCharacter() {
+		return this.#equation.service.next();
+	}
+
+	static #parse(root) {
+		let stack = new Stack({ root });
 		let number = '';
-		while (characters.length) {
-			const character = characters.shift().toLowerCase();
+		let nextCharacter = this.#getNextCharacter();
+		let endOfEquation = nextCharacter.done;
+		while (!endOfEquation) {
+			const character = nextCharacter.value.toLowerCase();
 			if (character.match(/[\d\.]/)) {
 				number = `${number}${character}`;
 			} else {
 				if (number !== '' && character !== 'd') {
-					operands.push(number);
+					stack.operands.push(number);
 					number = '';
 				}
 				switch(character) {
 					case 'd':
 						number = number || '1';
-						operators.push(`${number}-${character}`);
+						stack.operators.push(`${number}-${character}`);
 						number = '';
 						break;
 					case '(':
-						operators.push(character);
+						stack.operands.push(this.#parse(false));
 						break;
 					case ')':
-						Dice.#collapseStack({ operators, operands }, true);
-						if (operators[operators.length - 1] !== '(') {
+						if (stack.root) {
 							throw new Error('Mismatch of parenthesis. Too many close parenthesis.');
 						}
-						operators.pop();
+						stack = Dice.#collapseStack(stack);
+						endOfEquation = true;
 						break;
 					case '*':
 					case '/':
-						if ('+-'.indexOf(operators[operators.length - 1]) === -1) {
-							({ operands, operators } = Dice.#collapseStack({ operands, operators }));
+						if ('+-'.indexOf(stack.operators[stack.operators.length - 1]) === -1) {
+							stack = Dice.#collapseStack(stack);
 						}
-						operators.push(character);
+						stack.operators.push(character);
 						break;
 					case '+':
 					case '-':
-						({ operands, operators } = Dice.#collapseStack({ operands, operators }));
-						operators.push(character);
+						stack = Dice.#collapseStack(stack);
+						stack.operators.push(character);
 						break;
 					default:
 						// throw new Error('Unknown character in equation');
 						break;
 				}
 			}
+			if (!endOfEquation) {
+				nextCharacter = this.#getNextCharacter();
+				endOfEquation = nextCharacter.done;
+			}
 		}
 		if (number !== '') {
-			operands.push(number);
+			stack.operands.push(number);
 		}
-		({ operands, operators } = Dice.#collapseStack({ operands, operators }));
-		if (operands.length !== 1 || operators.length !== 0) {
+		stack = Dice.#collapseStack(stack);
+		if (stack.operands.length !== 1 || stack.operators.length !== 0) {
 			throw new Error('The equation is mal-formed');
 		}
-		return operands[0];
+		return stack.operands[0];
 	}
 
-	// TODO: I would like to possibly use a regex here to get what I need
-	static #collapseStack (stacks, closeParenthesis = false) {
-		let { operands, operators } = stacks;
-		while(operators.length && operators[operators.length - 1] !== '(') {
-			({operands, operators } = Dice.#collapse({ operands, operators }));
+	static #collapseStack (stack) {
+		while(stack.operators.length) {
+			stack = Dice.#collapse(stack);
 		}
-		if (closeParenthesis && operators[operators.length - 1] !== '(') {
-			throw new Error('Mismatch parenthesis. More than one close parenthesis found.');
-		}
-		return { operands, operators };
+		return stack;
 	}
 
-	static #collapse(stacks) {
-		const { operands, operators } = stacks;
-		if (operands.length + operators.length === 0) {
+	static #collapse(stack) {
+		if (stack.operands.length + stack.operators.length === 0) {
 			throw new Error('There must be at least one operand and one operator.');
 		}
-		if (operands.length === 1 && operators.length === 0) {
-			return { operands, operators };
+		if (stack.operands.length === 1 && stack.operators.length === 0) {
+			return stack;
 		}
-		if (operators.length === 0) {
+		if (stack.operators.length === 0) {
 			throw new Error('Badly formed equation. Too many operands for the operators.');
 		}
 		let result;
 		let dieNumber;
-		let operator = operators.pop();
+		let operator = stack.operators.pop();
 		if (operator.at(-1) === 'd') {
 			([dieNumber, operator] = operator.split('-'));
 		}
 		const numberOperands = Dice.#numberOperandsPerOperator.get(operator);
-		if (operands.length < numberOperands) {
-			throw new Error(`Badly formed equation. Too few operands for the operator ${operator}. (${operands.length}`);
+		if (stack.operands.length < numberOperands) {
+			throw new Error(`Badly formed equation. Too few operands for the operator ${operator}. (${stack.operands.length}`);
 		}
-		const numbers = operands.splice(operands.length - numberOperands).map((item) => parseFloat(item));
+		const numbers = stack.operands.splice(stack.operands.length - numberOperands).map((item) => parseFloat(item));
 		switch(operator) {
 			case '+':
 				result = numbers[0] + numbers[1];
@@ -138,8 +170,8 @@ export default class Dice {
 				}
 				break;
 		}
-		operands.push(result);
-		return { operands, operators };
+		stack.operands.push(result);
+		return stack;
 	}
 
 }

@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/TheVirtuoid/fwjs-dice#readme",
   "devDependencies": {
-    "cypress": "^10.1.0"
+    "cypress": "^13.6.3"
   }
 }
